@@ -1,0 +1,1 @@
+This directory contains code samples which you can use in your own bot.

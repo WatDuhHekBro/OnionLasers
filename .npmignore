@@ -1,0 +1,8 @@
+src/
+data/
+tmp/
+test*
+*.bat
+desktop.ini
+samples/
+tsconfig.json
