@@ -1,15 +1,31 @@
 import path from "path";
 import {Collection} from "discord.js";
-import {promises as ffs, existsSync, mkdirSync, readdirSync} from "fs";
+import {promises as ffs, existsSync, readdirSync} from "fs";
 import {toTitleCase} from "./util";
 import {Command} from "./command";
 import {categories} from "./constants";
+import {activateMessageEvent} from "./events";
 
 const BASE_DIR = path.dirname(process.argv[1]);
 const COMMANDS_DIR = path.join(BASE_DIR, "commands");
 const EVENTS_DIR = path.join(BASE_DIR, "events");
 
 let commands: Collection<string, Command>|null = null;
+
+export function loadEvents()
+{
+	for(const file of open(EVENTS_DIR, (filename: string) => filename.endsWith(".js")))
+	{
+		const header = file.substring(0, file.indexOf(".js"));
+		console.log(`Loading Event: ${header}`);
+		
+		import(path.join(EVENTS_DIR, header)).then(() => {
+			console.log(`Event ${header} successfully loaded!`);
+		}).catch(() => {
+			console.error(`Event ${header} failed to load!`);
+		});
+	}
+}
 
 /** Returns the cache of the commands if it exists and searches the directory if not. */
 export async function loadCommands(): Promise<Collection<string, Command>>
@@ -57,23 +73,9 @@ export async function loadCommands(): Promise<Collection<string, Command>>
 	
 	dir.close();
 	categories.set("Miscellaneous", listMisc);
+	activateMessageEvent(commands);
 	
 	return commands;
-}
-
-export function loadEvents()
-{
-	for(const file of open(EVENTS_DIR, (filename: string) => filename.endsWith(".js")))
-	{
-		const header = file.substring(0, file.indexOf(".js"));
-		console.log(`Loading Event: ${header}`);
-		
-		import(path.join(EVENTS_DIR, header)).then(() => {
-			console.log(`Event ${header} successfully loaded!`);
-		}).catch(() => {
-			console.error(`Event ${header} failed to load!`);
-		});
-	}
 }
 
 // Accept both a Node.js pure export and an ES6 default export. (Later)
@@ -83,7 +85,8 @@ async function loadCommand(filename: string, list: string[], category?: string)
 		return console.error(`Function "loadCommand" was called without first initializing commands!`);
 	
 	const prefix = category ?? "";
-	const header = filename.substring(0, filename.indexOf(".js"));
+	// The filename MUST be agnostic of specific extensions since it can run under certain conditions (ts-node + mocha interprets TS code).
+	const header = filename.substring(0, filename.lastIndexOf("."));
 	const command = (await import(path.join(COMMANDS_DIR, prefix, header))).default as Command|undefined;
 	
 	if(!command)
@@ -110,13 +113,15 @@ async function loadCommand(filename: string, list: string[], category?: string)
 
 function open(path: string, filter?: (value: string, index: number, array: string[]) => unknown): string[]
 {
-	if(!existsSync(path))
-		mkdirSync(path);
-	
-	let directory = readdirSync(path);
-	
-	if(filter)
-		directory = directory.filter(filter);
-	
-	return directory;
+	if(existsSync(path))
+	{
+		let directory = readdirSync(path);
+		
+		if(filter)
+			directory = directory.filter(filter);
+		
+		return directory;
+	}
+	else
+		return [];
 }

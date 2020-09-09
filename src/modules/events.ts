@@ -1,10 +1,9 @@
 import {botHasPermission} from "./discord";
-import {Permissions, TextChannel, DMChannel, NewsChannel} from "discord.js";
+import {Permissions, TextChannel, DMChannel, NewsChannel, Collection} from "discord.js";
 import {parseVars} from "./util";
 import {Command} from "./command";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 import {getPrefix} from "./dynamic";
-import {loadCommands} from "./loader";
 import {client, eventListeners} from "./constants";
 
 let currentChannel: TextChannel|DMChannel|NewsChannel|null = null;
@@ -15,7 +14,8 @@ process.on("unhandledRejection", (error: Error|null|undefined) => {
 	console.error(error);
 });
 
-loadCommands().then(commands => {
+export function activateMessageEvent(commands: Collection<string, Command>)
+{
 	client.on("message", async message => {
 		// Message Setup //
 		if(message.author.bot)
@@ -122,7 +122,7 @@ loadCommands().then(commands => {
 			});
 		}
 	});
-});
+}
 
 // Attached to the client, there can be one event listener attached to a message ID which is executed if present.
 client.on("messageReactionRemove", (reaction, user) => {
