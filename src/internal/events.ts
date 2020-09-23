@@ -1,10 +1,10 @@
-import {botHasPermission} from "./discord";
+import {botHasPermission} from "../modules/discord";
 import {Permissions, TextChannel, DMChannel, NewsChannel, Collection} from "discord.js";
-import {parseVars} from "./util";
-import {Command} from "./command";
-import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
-import {getPrefix} from "./dynamic";
-import {client, eventListeners} from "./constants";
+import {parseVars} from "../modules/util";
+import {Command} from "../modules/command";
+import {hasPermission, getPermissionLevel, getPermissionName} from "../modules/permissions";
+import {getPrefix} from "../modules/dynamic";
+import {client, eventListeners} from "../modules/constants";
 
 let currentChannel: TextChannel|DMChannel|NewsChannel|null = null;
 

@@ -1,7 +1,7 @@
 import path from "path";
 import {Collection} from "discord.js";
 import {promises as ffs, existsSync, readdirSync} from "fs";
-import {toTitleCase} from "./util";
+import {toTitleCase, isType, removeExtension} from "./util";
 import {Command} from "./command";
 import {categories} from "./constants";
 import {activateMessageEvent} from "../internal/events";
@@ -10,30 +10,8 @@ const BASE_DIR = path.dirname(process.argv[1]);
 const COMMANDS_DIR = path.join(BASE_DIR, "commands");
 const EVENTS_DIR = path.join(BASE_DIR, "events");
 
-let commands: Collection<string, Command>|null = null;
-
-export function loadEvents()
-{
-	for(const file of open(EVENTS_DIR, (filename: string) => filename.endsWith(".js")))
-	{
-		const header = file.substring(0, file.indexOf(".js"));
-		console.log(`Loading Event: ${header}`);
-		
-		import(path.join(EVENTS_DIR, header)).then(() => {
-			console.log(`Event ${header} successfully loaded!`);
-		}).catch(() => {
-			console.error(`Event ${header} failed to load!`);
-		});
-	}
-}
-
-/** Returns the cache of the commands if it exists and searches the directory if not. */
-export async function loadCommands(): Promise<Collection<string, Command>>
-{
-	if(commands)
-		return commands;
-	
-	commands = new Collection();
+export const commands = (async() => {
+	const commands = new Collection<string, Command>();
 	const dir = await ffs.opendir(COMMANDS_DIR);
 	const listMisc: string[] = [];
 	let selected;
@@ -60,15 +38,15 @@ export async function loadCommands(): Promise<Collection<string, Command>>
 					else
 						console.warn(`You can't have multiple levels of directories! From: "${path.join(COMMANDS_DIR, cmd.name)}"`);
 				}
-				else
-					loadCommand(cmd.name, list, selected.name);
+				//else
+				//	loadCommand(cmd.name, list, selected.name);
 			}
 			
 			subdir.close();
 			categories.set(category, list);
 		}
-		else
-			loadCommand(selected.name, listMisc);
+		//else
+		//	loadCommand(selected.name, listMisc);
 	}
 	
 	dir.close();
@@ -76,10 +54,24 @@ export async function loadCommands(): Promise<Collection<string, Command>>
 	activateMessageEvent(commands);
 	
 	return commands;
+})();
+
+export function loadEvents()
+{
+	for(const file of open(EVENTS_DIR).filter(filename => filename.endsWith(".js")))
+	{
+		const header = file.substring(0, file.indexOf(".js"));
+		console.log(`Loading Event: ${header}`);
+		
+		import(path.join(EVENTS_DIR, header)).then(() => {
+			console.log(`Event ${header} successfully loaded!`);
+		}).catch(() => {
+			console.error(`Event ${header} failed to load!`);
+		});
+	}
 }
 
-// Accept both a Node.js pure export and an ES6 default export. (Later)
-async function loadCommand(filename: string, list: string[], category?: string)
+/*async function loadCommand(filename: string, list: string[], category?: string)
 {
 	if(!commands)
 		return console.error(`Function "loadCommand" was called without first initializing commands!`);
@@ -109,19 +101,30 @@ async function loadCommand(filename: string, list: string[], category?: string)
 	}
 	
 	console.log(`Loading Command: ${header} (${category ? toTitleCase(category) : "Miscellaneous"})`);
+}*/
+
+// Accepts both Node.js pure exports and an ES6 default exports.
+export async function loadCommand(pathString: string)
+{
+	const header = removeExtension(path.basename(pathString));
+	const command = await import(pathString); // Note: The import function is relative to the executing file unless specified by an absolute path.
+	
+	// module.exports = new Command() or export = new Command() || export default new Command()
+	if(isType(command, Command) || isType(command?.default, Command))
+	{
+		console.log("pure")
+	}
+	// Invalid command file.
+	else
+	{
+		console.log("invalid")
+	}
 }
 
-function open(path: string, filter?: (value: string, index: number, array: string[]) => unknown): string[]
+function open(path: string): string[]
 {
 	if(existsSync(path))
-	{
-		let directory = readdirSync(path);
-		
-		if(filter)
-			directory = directory.filter(filter);
-		
-		return directory;
-	}
+		return readdirSync(path);
 	else
 		return [];
 }

@@ -16,7 +16,7 @@ async function confirm(prompt: string): Promise<boolean>
 
 // Since a Discord bot never ends its process (unless closed by the program itself), mocha will continue being alive.
 // Be sure to call mocha with the "--exit" flag to properly exit after all the tests are conducted.
-describe("A bot using this framework...", async function() {
+/*describe("A bot using this framework...", async function() {
 	this.timeout(0);
 	
 	before(async function() {
@@ -43,4 +43,8 @@ describe("A bot using this framework...", async function() {
 	it("should WAIT", async function() {
 		assert(await confirm("Did this happen?"));
 	})
-})
+	
+	it("should WAIT even moar", async function() {
+		assert(await confirm("Did this happen?"));
+	})
+})*/

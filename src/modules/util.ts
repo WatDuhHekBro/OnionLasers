@@ -190,3 +190,13 @@ export function split<T>(list: T[], lengthOfEachSection: number): T[][]
 
 	return sections;
 }
+
+export function removeExtension(filename: string)
+{
+    const index = filename.lastIndexOf(".");
+    
+    if(index !== -1)
+        return filename.substring(0, index);
+    else
+        return filename;
+}

@@ -1,0 +1,1 @@
+// Internal utility functions, not for use outside.

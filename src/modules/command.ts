@@ -146,7 +146,7 @@ export class Command
 			return TYPES.ROLE;
 		else if(this.emote && /^<a?:.*?:\d{17,19}>$/.test(param))
 			return TYPES.EMOTE;
-		else if(this.message && /\d{17,19}\/\d{17,19}\/\d{17,19}$/.test(param))
+		else if(this.message && /(\d{17,19}|@me)\/\d{17,19}\/\d{17,19}$/.test(param))
 			return TYPES.MESSAGE;
 		else if(this.user && /^<@!?\d{17,19}>$/.test(param))
 			return TYPES.USER;
@@ -186,6 +186,7 @@ function warnCommandAliases(command: Command|null, type: string)
 		console.warn(`There are aliases defined for an "${type}"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`);
 }
 
+// verify
 function checkResolvedCommand(command: Command|null|undefined): Command
 {
 	if(!command)
