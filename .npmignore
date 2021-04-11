@@ -1,8 +1,8 @@
-src/
-data/
-tmp/
-test*
+.husky
+test/
+.prettierignore
+prettier.config.js
+tsconfig.json
+*.tgz
 *.bat
 desktop.ini
-samples/
-tsconfig.json

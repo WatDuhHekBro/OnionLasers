@@ -1,9 +1,5 @@
 # Specific to this repository
 dist/
-data/
-tmp/
-test*
-!test/
 typings/
 *.bat
 desktop.ini

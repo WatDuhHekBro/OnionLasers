@@ -1,46 +1,21 @@
-// Overrides //
-process.argv[1] = __filename; // Set the base directory used by the framework to here.
+import {strict as assert} from "assert";
+import path from "path";
+import {Client} from "discord.js";
+import {launch} from "../src";
 
-import assert from "assert";
-import inquirer from "inquirer";
-import {launch, client, getPrefix} from "../src";
+// TODO: Add some mockups of data structures to test against then trigger them via client.emit().
 
-async function confirm(prompt: string): Promise<boolean>
-{
-	return (await inquirer.prompt({
-		type: "confirm",
-		name: "value",
-		message: prompt
-	})).value;
-}
+const client = new Client();
+process.env.TESTENV_EXTENSION = "*.ts";
+process.env.TESTENV_PATTERN = "^(?!template\\.ts)(?!modules\\/)(\\w+(?:\\/\\w+)?)(?:test\\.)?\\.ts$";
+launch(client, path.join(__dirname, "commands"));
 
-// Since a Discord bot never ends its process (unless closed by the program itself), mocha will continue being alive.
-// Be sure to call mocha with the "--exit" flag to properly exit after all the tests are conducted.
-describe("A bot using this framework...", async function() {
-	this.timeout(0);
-	
-	before(async function() {
-		launch((await inquirer.prompt({
-			// @ts-ignore
-			type: "password",
-			name: "token",
-			message: "What's your bot's token?",
-			mask: true
-		})).token);
-		
-		client.once("ready", () => {
-			client.user?.setActivity({
-				type: "LISTENING",
-				name: `${getPrefix()}help`
-			});
-		});
-	})
-	
-	it("should login successfully", function(done) {
-		client.once("ready", done);
-	})
-	
-	it("should WAIT", async function() {
-		assert(await confirm("Did this happen?"));
-	})
-})
+describe("A bot using this command handler...", function () {
+    it("placeholder", () => {
+        assert.strictEqual(1, 1);
+    });
+});
+
+after(() => {
+    client.destroy();
+});
