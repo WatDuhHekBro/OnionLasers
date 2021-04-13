@@ -7,26 +7,24 @@ import {loadableCommands, categoryTransformer} from "./interface";
 // Internally, it'll keep its original capitalization. It's up to you to convert it to title case when you make a help command.
 const categories = new Collection<string, string[]>();
 
-// This will go through all the .js files and import them. Because the import has to be .js (and cannot be .ts), there's no need for a custom filename checker in the launch settings.
+// This will go through all the .js/.ts files and import them. .js is used when a project is compiled normally, .ts is used when a project is interpreted via a REPL.
 // This will avoid the problems of being a node module by requiring absolute imports, which the user will pass in as a launch parameter.
-export async function loadCommands(commandsDir: string): Promise<Collection<string, NamedCommand>> {
+export async function loadCommands(
+    commandsDir: string,
+    useTSExtension: boolean
+): Promise<Collection<string, NamedCommand>> {
     // Add a trailing separator so that the reduced filename list will reliably cut off the starting part.
     // "C:/some/path/to/commands" --> "C:/some/path/to/commands/" (and likewise for \)
     commandsDir = path.normalize(commandsDir);
     if (!commandsDir.endsWith(path.sep)) commandsDir += path.sep;
 
     const commands = new Collection<string, NamedCommand>();
-    const files = await globP(path.join(commandsDir, "**", process.env.TESTENV_EXTENSION || "*.js")); // This stage filters out source maps (.js.map).
+    const files = await globP(path.join(commandsDir, "**", useTSExtension ? "*.ts" : "*.js")); // This stage filters out source maps (.js.map).
     // Because glob will use / regardless of platform, the following regex pattern can rely on / being the case.
     const filesClean = files.map((filename) => filename.substring(commandsDir.length));
-    // Extract the usable parts from commands directory if:
-    // - The path is 1 to 2 subdirectories (a or a/b, not a/b/c)
-    // - Any leading directory isn't "modules"
-    // - The filename doesn't end in .test.js (for jest testing)
-    // - The filename cannot be the hardcoded top-level "template.js", reserved for generating templates
-    const pattern = process.env.TESTENV_PATTERN
-        ? new RegExp(process.env.TESTENV_PATTERN)
-        : /^(?!template\.js)(?!modules\/)(\w+(?:\/\w+)?)(?:test\.)?\.js$/;
+    // Extract the usable parts from commands directory if the path is 1 to 2 subdirectories (a or a/b, not a/b/c).
+    // No further checks will be made to exclude template command files or test command files, keeping it structure-agnostic.
+    const pattern = new RegExp(`^([^/]+(?:\\/[^/]+)?)\\.${useTSExtension ? "ts" : "js"}$`);
     const lists: {[category: string]: string[]} = {};
 
     for (let i = 0; i < files.length; i++) {
@@ -107,7 +105,7 @@ export async function getCommandList(): Promise<Collection<string, NamedCommand[
 
     for (const [category, headers] of categories) {
         const commandList: NamedCommand[] = [];
-        for (const header of headers.filter((header) => header !== "test")) commandList.push(commands.get(header)!);
+        for (const header of headers) commandList.push(commands.get(header)!);
         // Ignore empty categories like "miscellaneous" (if it's empty).
         if (commandList.length > 0) list.set(categoryTransformer(category), commandList);
     }
@@ -128,7 +126,7 @@ export async function getCommandInfo(args: string[]): Promise<[CommandInfo, stri
     const commands = await loadableCommands;
     let header = args.shift()!;
     const command = commands.get(header);
-    if (!command || header === "test") return `No command found by the name \`${header}\`.`;
+    if (!command) return `No command found by the name \`${header}\`.`;
     if (!(command instanceof NamedCommand)) return "Command is not a proper instance of NamedCommand.";
     // If it's an alias, set the header to the original command name.
     if (command.name) header = command.name;

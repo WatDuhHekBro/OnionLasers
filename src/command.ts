@@ -306,24 +306,19 @@ export class Command extends BaseCommand {
             const id = patterns.channel.exec(param)![1];
             const channel = await getChannelByID(id);
 
+            // The channel could be of any type as long as it matches <#...>.
+            // The user would have to specify the channel type themselves via instanceof.
+            // No narrowing is done because it'd be too restrictive.
             if (typeof channel !== "string") {
-                if (channel instanceof TextChannel || channel instanceof DMChannel) {
-                    metadata.symbolicArgs.push("<channel>");
-                    menu.args.push(channel);
-                    return this.channel.execute(args, menu, metadata);
-                } else {
-                    return `\`${id}\` is not a valid text channel!`;
-                }
+                metadata.symbolicArgs.push("<channel>");
+                menu.args.push(channel);
+                return this.channel.execute(args, menu, metadata);
             } else {
                 return channel;
             }
         } else if (this.role && patterns.role.test(param)) {
             const id = patterns.role.exec(param)![1];
-
-            if (!menu.guild) {
-                return "You can't use role parameters in DM channels!";
-            }
-
+            if (!menu.guild) return "You can't use role parameters in DM channels!";
             const role = menu.guild.roles.cache.get(id);
 
             if (role) {
@@ -382,28 +377,19 @@ export class Command extends BaseCommand {
             metadata.symbolicArgs.push("<id>");
             const id = patterns.id.exec(param)![1];
 
-            // Probably modularize the findXByY code in general in libd.
-            // Because this part is pretty much a whole bunch of copy pastes.
             switch (this.idType) {
                 case "channel":
                     const channel = await getChannelByID(id);
 
                     if (typeof channel !== "string") {
-                        if (channel instanceof TextChannel || channel instanceof DMChannel) {
-                            metadata.symbolicArgs.push("<channel>");
-                            menu.args.push(channel);
-                            return this.id.execute(args, menu, metadata);
-                        } else {
-                            return `\`${id}\` is not a valid text channel!`;
-                        }
+                        metadata.symbolicArgs.push("<channel>");
+                        menu.args.push(channel);
+                        return this.id.execute(args, menu, metadata);
                     } else {
                         return channel;
                     }
                 case "role":
-                    if (!menu.guild) {
-                        return "You can't use role parameters in DM channels!";
-                    }
-
+                    if (!menu.guild) return "You can't use role parameters in DM channels!";
                     const role = menu.guild.roles.cache.get(id);
 
                     if (role) {
@@ -470,9 +456,6 @@ export class Command extends BaseCommand {
                 " "
             )}\` found.`;
         }
-
-        // Note: Do NOT add a return statement here. In case one of the other sections is missing
-        // a return statement, there'll be a compile error to catch that.
     }
 
     // What this does is resolve the resulting subcommand as well as the inherited properties and the available subcommands.

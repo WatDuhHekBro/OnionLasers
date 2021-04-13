@@ -1,5 +1,6 @@
 .husky
 test/
+tmp/
 .prettierignore
 prettier.config.js
 tsconfig.json

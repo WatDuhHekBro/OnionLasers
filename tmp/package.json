@@ -1,0 +1,15 @@
+{
+    "name": "onion-lasers-internal-playground",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "scripts": {
+        "start": "tsc-watch --onSuccess \"node .\""
+    },
+    "dependencies": {
+        "dotenv": "^8.2.0",
+        "onion-lasers": "file://../"
+    },
+    "devDependencies": {
+        "tsc-watch": "^4.2.9"
+    }
+}

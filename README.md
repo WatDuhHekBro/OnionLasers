@@ -12,4 +12,6 @@
 	</a>
 </p>
 
+A declarative, structure-agnostic, TypeScript-centric command handler for [discord.js](https://discord.js.org/).
+
 *Coming Soon™*

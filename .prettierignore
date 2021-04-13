@@ -9,7 +9,6 @@ LICENSE
 dist/
 docs/
 *.md
-tmp/
 *.bat
 desktop.ini
 

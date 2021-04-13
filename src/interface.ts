@@ -18,6 +18,7 @@ interface LaunchSettings {
     permissionLevels?: PermissionLevel[];
     getPrefix?: PrefixResolver;
     categoryTransformer?: CategoryTransformer;
+    useTSExtension?: boolean;
 }
 
 // One alternative to putting everything in launch(client, ...) is to create an object then set each individual aspect, such as OnionCore.setPermissions(...).
@@ -29,7 +30,7 @@ export async function launch(newClient: Client, commandsDirectory: string, setti
     // Core Launch Parameters //
     client.destroy(); // Release any resources/connections being used by the placeholder client.
     client = newClient;
-    loadableCommands = loadCommands(commandsDirectory);
+    loadableCommands = loadCommands(commandsDirectory, !!settings?.useTSExtension);
     attachMessageHandlerToClient(newClient);
     attachEventListenersToClient(newClient);
 

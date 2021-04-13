@@ -4,12 +4,11 @@
     "description": "A command framework for Discord bots with an emphasis on making full use of command arguments.",
     "main": "dist/index.js",
     "scripts": {
-        "build": "tsc",
-        "watch": "tsc --watch",
+        "start": "tsc --watch",
         "test": "mocha --require ts-node/register --extension ts --recursive --unhandled-rejections=strict",
         "format": "prettier --write **/*",
         "prepare": "husky install",
-        "prepack": "npm run build"
+        "prepack": "tsc"
     },
     "dependencies": {
         "discord.js": "^12.5.3",
