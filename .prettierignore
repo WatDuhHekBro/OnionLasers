@@ -7,7 +7,6 @@ LICENSE
 
 # Specific to this repository
 dist/
-docs/
 *.md
 *.bat
 desktop.ini

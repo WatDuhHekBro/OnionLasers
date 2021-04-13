@@ -256,13 +256,6 @@ async function reactInOrder(message: Message, emotes: EmojiIdentifierResolvable[
     }
 }
 
-/**
- * Tests if a bot has a certain permission in a specified guild.
- */
-export function botHasPermission(guild: Guild | null, permission: number): boolean {
-    return !!guild?.me?.hasPermission(permission);
-}
-
 // For "get x by y" methods:
 // Caching: All guilds, channels, and roles are fully cached, while the caches for messages, users, and members aren't complete.
 // It's more reliable to get users/members by fetching their IDs. fetch() will searching through the cache anyway.

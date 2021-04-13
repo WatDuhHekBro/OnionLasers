@@ -1,5 +1,4 @@
 import {Client, Permissions, Message, MessageReaction, User, PartialUser} from "discord.js";
-import {botHasPermission} from "./lib";
 
 // A list of message ID and callback pairs. You get the emote name and ID of the user reacting.
 // This will handle removing reactions automatically (if the bot has the right permission).
@@ -13,13 +12,13 @@ export function attachEventListenersToClient(client: Client) {
     client.on("messageReactionAdd", (reaction, user) => {
         // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
         // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-        const canDeleteEmotes = botHasPermission(reaction.message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
+        const canDeleteEmotes = !!reaction.message.guild?.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES);
         reactEventListeners.get(reaction.message.id)?.(reaction, user);
         if (canDeleteEmotes && !user.partial) reaction.users.remove(user);
     });
 
     client.on("messageReactionRemove", (reaction, user) => {
-        const canDeleteEmotes = botHasPermission(reaction.message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
+        const canDeleteEmotes = reaction.message.guild?.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES);
         if (!canDeleteEmotes) reactEventListeners.get(reaction.message.id)?.(reaction, user);
     });
 
