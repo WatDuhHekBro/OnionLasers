@@ -1,4 +1,4 @@
-import {launch} from "onion-lasers";
+import {launch} from "../..";
 import {Client} from "discord.js";
 import dotenv from "dotenv";
 import path from "path";

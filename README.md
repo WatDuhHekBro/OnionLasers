@@ -1,6 +1,11 @@
 # Onion Lasers Command Handler
 
 <p align="center">
+    <a href="https://nodei.co/npm/onion-lasers/">
+        <img src="https://nodei.co/npm/onion-lasers.png">
+    </a>
+</p>
+<p align="center">
     <a href="https://choosealicense.com/licenses/mit/">
         <img src="https://img.shields.io/github/license/WatDuhHekBro/OnionLasers" alt="License">
     </a>
@@ -19,7 +24,7 @@ A declarative, structure-agnostic, TypeScript-centric command handler for [disco
 1. [Minimalist Example](#minimalist-example)
 2. [An Overview](#an-overview)
 3. [Reference: Command](#command-reference)
-4. [Reference: Utility Functions](#utility-functions-reference) - include lib, loader (help command), permissions
+4. [Reference: Utility Functions](#utility-functions-reference)
 5. [Reference: Launcher](#launcher-reference)
 6. [Contributing](#contributing)
 7. [Design Decisions](#design-decisions)
@@ -473,12 +478,11 @@ Parameter | Type | Description
 1. Go to the root folder
 2. `npm install`
 3. `npm start`
-4. Go to the `tmp` folder
-5. `npm install`
-6. Add `.env` and set `TOKEN` equal to whatever your bot's token is
-7. `npm start`
-8. Create `tmp/src/commands` and add whatever commands in there
-9. Now, any changes to either the command handler as well as the playground code should automatically reload the test bot
+4. Go to the `tmp` folder in another process
+5. Add `.env` and set `TOKEN` equal to whatever your bot's token is
+6. `npm start`
+7. Create `tmp/src/commands` and add whatever commands in there
+8. Now, any changes to either the command handler as well as the playground code should automatically reload the test bot
 
 ## Version and Release Stuff
 
