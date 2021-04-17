@@ -376,6 +376,7 @@ Utility function to generate a reactor collector that automatically deletes. See
 - `getMessageByID(string)`
 - `getUserByID(string)`
 - `getUserByName(string)`
+- `getUserByNickname(Discord.Guild, string)`
 - `getMemberByID(Discord.Guild, string)`
 - `getMemberByName(Discord.Guild, string)`
 

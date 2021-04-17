@@ -349,6 +349,24 @@ export function getUserByName(name: string): User | string {
     else return `No user found by the name of \`${name}\`!`;
 }
 
+// First searches the current guild (if it exists) for a nickname, then all users for a name.
+export async function getUserByNickname(name: string, guild: Guild | null): Promise<User | string> {
+    if (guild) {
+        const member = (
+            await guild.members.fetch({
+                query: name,
+                limit: 1
+            })
+        ).first();
+
+        if (member) {
+            return member.user;
+        }
+    }
+
+    return getUserByName(name);
+}
+
 export async function getMemberByID(guild: Guild, id: string): Promise<GuildMember | string> {
     try {
         return await guild.members.fetch(id);
@@ -372,12 +390,12 @@ export async function getMemberByName(guild: Guild, name: string): Promise<Guild
     } else {
         const user = getUserByName(name);
 
-        if (user instanceof User) {
+        if (typeof user !== "string") {
             const member = guild.members.resolve(user);
             if (member) return member;
             else return `The user \`${user.tag}\` isn't in this guild!`;
         } else {
-            return `No member found by the name of \`${name}\`!`;
+            return user;
         }
     }
 }
