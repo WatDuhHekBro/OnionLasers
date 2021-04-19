@@ -79,51 +79,54 @@ export function attachMessageHandlerToClient(client: Client) {
                     `I couldn't find the command or alias that starts with \`${header}\`. To see the list of commands, type \`help\``
                 );
             }
-        }
-        // Continue if the bot has permission to send messages in this channel.
-        else if (channel.permissionsFor(client.user!)!.has(Permissions.FLAGS.SEND_MESSAGES)) {
+        } else {
             const prefix = getPrefix(guild);
+            const hasPermissionToSend = channel.permissionsFor(client.user!)!.has(Permissions.FLAGS.SEND_MESSAGES);
+            const noPermissionToSendMessage = `I don't have permission to send messages in ${channel}. ${
+                member!.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+                    ? "Because you're a server admin, you have the ability to change that channel's permissions to match if that's what you intended."
+                    : "Try using a different channel or contacting a server admin to change permissions of that channel if you think something's wrong."
+            }`;
 
             // First, test if the message is just a ping to the bot.
             if (new RegExp(`^<@!?${client.user!.id}>$`).test(text)) {
-                send(`${author}, my prefix on this server is \`${prefix}\`.`);
+                // Let the user know the guild's prefix either through the channel or DMs if the bot can't send the message.
+                if (hasPermissionToSend) send(`My prefix on this server is \`${prefix}\`.`);
+                else author.send(noPermissionToSendMessage);
             }
             // Then check if it's a normal command.
             else if (text.startsWith(prefix)) {
                 const [header, ...args] = text.substring(prefix.length).split(/ +/);
 
                 if (commands.has(header)) {
-                    const command = commands.get(header)!;
+                    // If it's a valid command, check if the bot has permissions to send in that channel.
+                    if (hasPermissionToSend) {
+                        const command = commands.get(header)!;
 
-                    // Set last command info in case of unhandled rejections.
-                    lastCommandInfo.header = header;
-                    lastCommandInfo.args = [...args];
-                    lastCommandInfo.channel = channel;
+                        // Set last command info in case of unhandled rejections.
+                        lastCommandInfo.header = header;
+                        lastCommandInfo.args = [...args];
+                        lastCommandInfo.channel = channel;
 
-                    // Send the arguments to the command to resolve and execute.
-                    const result = await command.execute(args, menu, {
-                        header,
-                        args: [...args],
-                        ...defaultMetadata,
-                        symbolicArgs: []
-                    });
+                        // Send the arguments to the command to resolve and execute.
+                        const result = await command.execute(args, menu, {
+                            header,
+                            args: [...args],
+                            ...defaultMetadata,
+                            symbolicArgs: []
+                        });
 
-                    // If something went wrong, let the user know (like if they don't have permission to use a command).
-                    if (result) {
-                        send(result);
+                        // If something went wrong, let the user know (like if they don't have permission to use a command).
+                        if (result) {
+                            send(result);
+                        }
+                    }
+                    // Otherwise, let the sender know that the bot doesn't have permission to send messages.
+                    else {
+                        author.send(noPermissionToSendMessage);
                     }
                 }
             }
-        }
-        // Otherwise, let the sender know that the bot doesn't have permission to send messages.
-        else {
-            author.send(
-                `I don't have permission to send messages in ${channel}. ${
-                    member!.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
-                        ? "Because you're a server admin, you have the ability to change that channel's permissions to match if that's what you intended."
-                        : "Try using a different channel or contacting a server admin to change permissions of that channel if you think something's wrong."
-                }`
-            );
         }
     });
 }
