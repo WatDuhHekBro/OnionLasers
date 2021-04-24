@@ -1,3 +1,6 @@
+# 1.1.2
+- Fixed an issue where a bot would end up deleting all reactions regardless of whether or not the message had a reaction event listener to begin with (i.e. for `paginate`).
+
 # 1.1.1
 - Fixed an issue where a bot would send the "no permissions to send in channel" message even if the message wasn't a command.
 
