@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "main": "dist/index.js",
     "scripts": {
-        "start": "tsc-watch --onSuccess \"node .\""
+        "start": "tsc-watch --onSuccess \"npm run instance\"",
+        "instance": "gulp && tsc && node ."
     }
 }

@@ -1,9 +1,10 @@
 .husky
 test/
-tmp/
+playground/
 .prettierignore
 prettier.config.js
 tsconfig.json
 *.tgz
 *.bat
 desktop.ini
+gulpfile.js

@@ -246,7 +246,7 @@ export function generateOneTimePrompt<T>(
 // Start a parallel chain of ordered reactions, allowing a collector to end early.
 // Check if the collector ended early by seeing if the message is already deleted.
 // Though apparently, message.deleted doesn't seem to update fast enough, so just put a try catch block on message.react().
-async function reactInOrder(message: Message, emotes: EmojiIdentifierResolvable[]): Promise<void> {
+export async function reactInOrder(message: Message, emotes: EmojiIdentifierResolvable[]): Promise<void> {
     for (const emote of emotes) {
         try {
             await message.react(emote);

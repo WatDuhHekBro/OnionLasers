@@ -96,6 +96,10 @@ Input | Output
 `.query 123456789012345678` | The name of this user is: some username
 `.query this is some random text` | You entered: this is some random text
 
+## Note: JavaScript
+
+To use this in JavaScript, you'd use `const <A> = require(<B>)` instead of `import <A> from <B>` and `module.exports = new NamedCommand(...)` instead of `export default new NamedCommand(...)`.
+
 # An Overview
 
 This is a brief overview that'll describe the basics of how this command handler works.
@@ -367,6 +371,10 @@ const reply = await askForReply(await send("What is your favorite thing to do?")
 
 Utility function to generate a reactor collector that automatically deletes. See the source for the other utility functions to see how to make your own using this.
 
+## reactInOrder()
+
+Starts a parallel chain of ordered reactions so that it doesn't block the main chain of execution. If the message is deleted, it'll prevent any errors from throwing and end the loop early.
+
 ## Miscellaneous Utility Functions
 
 - `getGuildByID(string)`
@@ -479,10 +487,10 @@ Parameter | Type | Description
 1. Go to the root folder
 2. `npm install`
 3. `npm start`
-4. Go to the `tmp` folder in another process
+4. Go to the `playground` folder in another process
 5. Add `.env` and set `TOKEN` equal to whatever your bot's token is
 6. `npm start`
-7. Create `tmp/src/commands` and add whatever commands in there
+7. Create `playground/ts/src/commands` and add whatever commands in there
 8. Now, any changes to either the command handler as well as the playground code should automatically reload the test bot
 
 ## Version and Release Stuff
