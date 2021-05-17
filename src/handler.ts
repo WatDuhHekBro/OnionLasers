@@ -8,15 +8,22 @@ export function addInterceptRule(handler: (message: Message) => boolean) {
     interceptRules.push(handler);
 }
 
-const lastCommandInfo: {
+// The reason no rejection handler will be added by OnionLasers is because doing so would be far too restrictive.
+// The resulting being that users wanting to add their own rejection handler would essentially have to work around the library rather than work with it.
+interface ExecutedCommandInfo {
     header: string;
     args: string[];
-    channel: TextChannel | DMChannel | NewsChannel | null;
-} = {
-    header: "N/A",
-    args: [],
-    channel: null
-};
+    channel: TextChannel | DMChannel | NewsChannel;
+}
+
+let executedCommandListener = (_executedCommandInfo: ExecutedCommandInfo) => {};
+
+/**
+ * This will allow you to capture the command and command arguments for keeping track of the last command or to do something whenever a command is executed.
+ */
+export function setExecuteCommandListener(listener: (executedCommandInfo: ExecutedCommandInfo) => void) {
+    executedCommandListener = listener;
+}
 
 const defaultMetadata = {
     permission: 0,
@@ -58,9 +65,11 @@ export function attachMessageHandlerToClient(client: Client) {
                 const command = commands.get(header)!;
 
                 // Set last command info in case of unhandled rejections.
-                lastCommandInfo.header = header;
-                lastCommandInfo.args = [...args];
-                lastCommandInfo.channel = channel;
+                executedCommandListener({
+                    header,
+                    args: [...args],
+                    channel
+                });
 
                 // Send the arguments to the command to resolve and execute.
                 const result = await command.execute(args, menu, {
@@ -104,9 +113,11 @@ export function attachMessageHandlerToClient(client: Client) {
                         const command = commands.get(header)!;
 
                         // Set last command info in case of unhandled rejections.
-                        lastCommandInfo.header = header;
-                        lastCommandInfo.args = [...args];
-                        lastCommandInfo.channel = channel;
+                        executedCommandListener({
+                            header,
+                            args: [...args],
+                            channel
+                        });
 
                         // Send the arguments to the command to resolve and execute.
                         const result = await command.execute(args, menu, {
@@ -130,12 +141,3 @@ export function attachMessageHandlerToClient(client: Client) {
         }
     });
 }
-
-process.on("unhandledRejection", (reason: any) => {
-    if (reason?.name === "DiscordAPIError") {
-        console.error(`Command Error: ${lastCommandInfo.header} (${lastCommandInfo.args.join(", ")})\n${reason.stack}`);
-        lastCommandInfo.channel?.send(
-            `There was an error while trying to execute that command!\`\`\`${reason.stack}\`\`\``
-        );
-    }
-});

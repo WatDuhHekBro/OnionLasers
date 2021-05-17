@@ -1,5 +1,6 @@
-#
+# 1.1.3
 - Made `reactInOrder` public
+- Moved last executed command rejection handler to just a callback for better user customization. **You'll need to implement `process.on("unhandledRejection", ...)` now.**
 
 # 1.1.2
 - Fixed an issue where a bot would end up deleting all reactions regardless of whether or not the message had a reaction event listener to begin with (i.e. for `paginate`).

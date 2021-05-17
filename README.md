@@ -19,6 +19,8 @@
 
 A declarative, structure-agnostic, TypeScript-centric command handler for [discord.js](https://discord.js.org/).
 
+*Note: There's an unstable version in the works which uses discord.js v13 (via its `master` branch), installable via `npm install onion-lasers@unstable`. Interfaces defined in this branch are subject to change. I don't recommend using this unless you know what you're doing!*
+
 # Table of Contents
 
 1. [Minimalist Example](#minimalist-example)
@@ -455,6 +457,61 @@ Allows you to add custom conditions where the command handler should *not* execu
 addInterceptRule(message => message.content === ".test");
 ```
 
+## setExecuteCommandListener()
+
+This will allow you to capture the command and command arguments for keeping track of the last command or to do something whenever a command is executed.
+
+*An example rejection handler which uses last executed command info along with events:*
+
+```ts
+let lastEvent = "N/A";
+let lastCommandInfo: {
+    header: string;
+    args: string[];
+    channel: TextChannel | DMChannel | NewsChannel | null;
+} = {
+    header: "N/A",
+    args: [],
+    channel: null
+};
+
+process.on("unhandledRejection", (reason: any) => {
+    const isDiscordError = reason?.name === "DiscordAPIError";
+
+    if (isDiscordError) {
+        // If it's a DiscordAPIError on a message event, I'll make the assumption that it comes from the command handler.
+        // That's not always the case though, especially if you add your own message events. Just be wary of that.
+        if (lastEvent === "message") {
+            console.error(
+                `Command Error: ${lastCommandInfo.header} (${lastCommandInfo.args.join(", ")})\n${reason.stack}`
+            );
+            lastCommandInfo.channel?.send(
+                `There was an error while trying to execute that command!\`\`\`${reason.stack}\`\`\``
+            );
+        } else {
+            console.error(`@${lastEvent}\n${reason.stack}`);
+        }
+    }
+});
+
+// Store info on which command was executed last.
+setExecuteCommandListener(({header, args, channel}) => {
+    lastCommandInfo = {
+        header,
+        args,
+        channel
+    };
+});
+
+// This will dynamically attach all known events instead of doing it manually.
+// As such, it needs to be placed after all other events are attached or the tracking won't be done properly.
+for (const event of client.eventNames()) {
+    client.on(event, () => {
+        lastEvent = event.toString();
+    });
+}
+```
+
 ## SingleMessageOptions
 
 A typedef to return a Discord message (which could send a string, embed, attachments, or all of them at the same time).
@@ -490,7 +547,7 @@ Parameter | Type | Description
 4. Go to the `playground` folder in another process
 5. Add `.env` and set `TOKEN` equal to whatever your bot's token is
 6. `npm start`
-7. Create `playground/ts/src/commands` and add whatever commands in there
+7. Create `playground/src/commands` and add whatever commands in there
 8. Now, any changes to either the command handler as well as the playground code should automatically reload the test bot
 
 ## Version and Release Stuff
@@ -513,7 +570,7 @@ Unless there's some sort of TypeScript wizardry to solve this, the `args` parame
 
 ### Channel Type Type Guards
 
-As of right now, it's currently not feasible to implement type guards for channel types. [Discriminated unions with a default parameter don't work with callbacks.](https://github.com/microsoft/TypeScript/issues/41759) In order to implement type guards, the `channelType` parameter would have to be required, making each command layer quite tedious.
+Although type guards for channel types would work [as the issue for discriminated union callbacks with a default parameter was fixed](https://github.com/microsoft/TypeScript/issues/41759), because each `Command` instance is isolated from each other, the `channelType` would only affect the current instance rather than any instance down the line.
 
 So instead, use non-null assertions when setting the `channelType`. For example:
 
