@@ -44,6 +44,7 @@ export function attachMessageHandlerToClient(client: Client) {
         const commands = await loadableCommands;
         const {author, channel, content, guild, member} = message;
         const send = channel.send.bind(channel);
+        const reply = message.reply.bind(message);
         const text = content;
         const menu = {
             author,
@@ -53,7 +54,8 @@ export function attachMessageHandlerToClient(client: Client) {
             member,
             message,
             args: [],
-            send
+            send,
+            reply
         };
 
         // Execute a dedicated block for messages in DM channels.
@@ -92,7 +94,7 @@ export function attachMessageHandlerToClient(client: Client) {
             const prefix = getPrefix(guild);
             const hasPermissionToSend = channel.permissionsFor(client.user!)!.has(Permissions.FLAGS.SEND_MESSAGES);
             const noPermissionToSendMessage = `I don't have permission to send messages in ${channel}. ${
-                member!.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+                member!.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
                     ? "Because you're a server admin, you have the ability to change that channel's permissions to match if that's what you intended."
                     : "Try using a different channel or contacting a server admin to change permissions of that channel if you think something's wrong."
             }`;

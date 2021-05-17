@@ -1,9 +1,12 @@
 import {launch, setExecuteCommandListener} from "../..";
-import {Client, TextChannel, DMChannel, NewsChannel} from "discord.js";
+import {Client, Intents, TextChannel, DMChannel, NewsChannel} from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
 
-export const client = new Client();
+export const client = new Client({
+    intents: Intents.ALL,
+    allowedMentions: {parse: []}
+});
 dotenv.config();
 
 client

@@ -45,7 +45,7 @@ export async function launch(newClient: Client, commandsDirectory: string, setti
 
 // Placeholder until properly loaded by the user.
 export let loadableCommands = (async () => new Collection<string, NamedCommand>())();
-export let client = new Client();
+export let client = new Client({intents: 0});
 export let permissionLevels: PermissionLevel[] = [
     {
         name: "User",

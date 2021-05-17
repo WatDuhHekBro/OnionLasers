@@ -94,7 +94,7 @@ export function paginate(
                 if (user.id === listenTo || (listenTo === null && user.id !== client.user!.id)) {
                     // Turn the page
                     const emote = reaction.emoji.name;
-                    if (emote in stack) turn(stack[emote]);
+                    if (emote && emote in stack) turn(stack[emote]);
 
                     // Reset the timer
                     client.clearTimeout(timeout);
@@ -123,7 +123,7 @@ export async function poll(message: Message, emotes: string[], duration = 60000)
 
     reactInOrder(message, emotes);
     const reactions = await message.awaitReactions(
-        (reaction: MessageReaction) => emotes.includes(reaction.emoji.name),
+        (reaction: MessageReaction) => !!reaction.emoji.name && emotes.includes(reaction.emoji.name),
         {time: duration}
     );
     const reactionsByCount: {[emote: string]: number} = {};
@@ -221,7 +221,7 @@ export function generateOneTimePrompt<T>(
                 if (user.id === listenTo || listenTo === null) {
                     const emote = reaction.emoji.name;
 
-                    if (emote in stack) {
+                    if (emote && emote in stack) {
                         resolve(stack[emote]);
                         message.delete();
                     }
@@ -284,9 +284,13 @@ export function getGuildByName(name: string): Guild | string {
     }
 }
 
+// https://github.com/discordjs/discord.js/pull/5422
 export async function getChannelByID(id: string): Promise<Channel | string> {
     try {
-        return await client.channels.fetch(id);
+        return (
+            (await client.channels.fetch(id)) ||
+            `Either failed to find guild or unknown channel type for channel ID \`${id}\`.`
+        );
     } catch {
         return `No channel found by the ID of \`${id}\`!`;
     }

@@ -12,7 +12,7 @@ export function attachEventListenersToClient(client: Client) {
     client.on("messageReactionAdd", (reaction, user) => {
         // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
         // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-        const canDeleteEmotes = !!reaction.message.guild?.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES);
+        const canDeleteEmotes = !!reaction.message.guild?.me?.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES);
         const hasReactionHandler = reactEventListeners.has(reaction.message.id);
 
         if (hasReactionHandler) {
@@ -24,7 +24,7 @@ export function attachEventListenersToClient(client: Client) {
     });
 
     client.on("messageReactionRemove", (reaction, user) => {
-        const canDeleteEmotes = reaction.message.guild?.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES);
+        const canDeleteEmotes = reaction.message.guild?.me?.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES);
         // If reactions aren't automatically removed, then call the event listener again.
         if (!canDeleteEmotes) reactEventListeners.get(reaction.message.id)?.(reaction, user);
     });

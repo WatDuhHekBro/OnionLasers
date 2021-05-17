@@ -324,6 +324,7 @@ Now `$test more stuff` is possible, and you'd get an extra variable (which is ju
 - `author`: `message.author`
 - `member`: `message.member`
 - `send`: `message.channel.send`
+- `reply`: `message.reply`
 
 ## Command Var String
 

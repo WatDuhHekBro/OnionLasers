@@ -8,3 +8,4 @@ tsconfig.json
 *.bat
 desktop.ini
 gulpfile.js
+patch.js

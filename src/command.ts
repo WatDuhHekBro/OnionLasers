@@ -68,6 +68,7 @@ interface CommandMenu {
     // member object for the author. This will happen if the author of a message left the guild.
     readonly member: GuildMember | null;
     readonly send: SendFunction;
+    readonly reply: SendFunction;
 }
 
 interface CommandOptionsBase {
