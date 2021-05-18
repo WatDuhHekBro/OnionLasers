@@ -3,9 +3,11 @@ import glob from "glob";
 import path from "path";
 import {NamedCommand, CommandInfo} from "./command";
 import {loadableCommands, categoryTransformer} from "./interface";
+import {SlashCommand} from "./slashCommands";
 
 // Internally, it'll keep its original capitalization. It's up to you to convert it to title case when you make a help command.
 const categories = new Collection<string, string[]>();
+export const slashCommandRegistry = new Collection<string, SlashCommand>(); // Collection<command name, command instance>
 
 // This will go through all the .js/.ts files and import them. .js is used when a project is compiled normally, .ts is used when a project is interpreted via a REPL.
 // This will avoid the problems of being a node module by requiring absolute imports, which the user will pass in as a launch parameter.
@@ -69,8 +71,14 @@ export async function loadCommands(
 
                 if (isNameOverridden) console.log(`Loaded Command: "${commandID}" as "${header}"`);
                 else console.log(`Loaded Command: ${commandID}`);
+            } else if (command instanceof SlashCommand) {
+                // Doing without name overrides shouldn't ever be a problem.
+                // Slash command names are restricted to lowercase and alphanumeric, all of which are available in common file systems.
+                slashCommandRegistry.set(commandName, command);
             } else {
-                console.warn(`Command "${commandID}" has no default export which is a NamedCommand instance!`);
+                console.warn(
+                    `Command "${commandID}" has no default export which is a NamedCommand or SlashCommand instance!`
+                );
             }
         } catch (error) {
             console.error(error);

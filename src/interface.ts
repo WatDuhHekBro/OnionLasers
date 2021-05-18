@@ -1,6 +1,7 @@
 import {Collection, Client, User, GuildMember, Guild} from "discord.js";
 import {attachMessageHandlerToClient} from "./handler";
 import {attachEventListenersToClient} from "./eventListeners";
+import {attachSlashCommandHandlerToClient} from "./slashCommands";
 import {NamedCommand} from "./command";
 import {loadCommands} from "./loader";
 
@@ -19,6 +20,7 @@ interface LaunchSettings {
     getPrefix?: PrefixResolver;
     categoryTransformer?: CategoryTransformer;
     useTSExtension?: boolean;
+    slashCommandDevServers?: string[];
 }
 
 // One alternative to putting everything in launch(client, ...) is to create an object then set each individual aspect, such as OnionCore.setPermissions(...).
@@ -33,6 +35,7 @@ export async function launch(newClient: Client, commandsDirectory: string, setti
     loadableCommands = loadCommands(commandsDirectory, !!settings?.useTSExtension);
     attachMessageHandlerToClient(newClient);
     attachEventListenersToClient(newClient);
+    attachSlashCommandHandlerToClient(newClient, settings?.slashCommandDevServers || []);
 
     // Additional Configuration //
     if (settings?.permissionLevels) {

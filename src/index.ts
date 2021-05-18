@@ -5,3 +5,4 @@ export {launch} from "./interface";
 export * from "./lib";
 export {getCommandList, getCommandInfo} from "./loader";
 export {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
+export {SlashCommand} from "./slashCommands";

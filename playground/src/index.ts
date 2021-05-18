@@ -15,7 +15,8 @@ client
     .catch(console.error);
 
 launch(client, path.join(__dirname, "commands"), {
-    getPrefix: () => "$"
+    getPrefix: () => "$",
+    slashCommandDevServers: process.env.DEV_SERVERS?.split(",")
 });
 
 // Error Handling //
