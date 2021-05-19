@@ -39,3 +39,5 @@ export function parseVars(line: string, definitions: {[key: string]: string}, in
 export function requireAllCasesHandledFor(variable: never): never {
     throw new Error(`This function should never be called but got the value: ${variable}`);
 }
+
+export const NO_DESCRIPTION = "No description.";

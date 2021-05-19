@@ -75,6 +75,7 @@ export async function loadCommands(
                 // Doing without name overrides shouldn't ever be a problem.
                 // Slash command names are restricted to lowercase and alphanumeric, all of which are available in common file systems.
                 slashCommandRegistry.set(commandName, command);
+                console.log(`Loaded Slash Command: ${commandID}`);
             } else {
                 console.warn(
                     `Command "${commandID}" has no default export which is a NamedCommand or SlashCommand instance!`

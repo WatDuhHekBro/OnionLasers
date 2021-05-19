@@ -13,7 +13,7 @@ import {
 import {getChannelByID, getGuildByID, getMessageByID, getUserByID, SendFunction} from "./lib";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 import {getPrefix} from "./interface";
-import {parseVars, requireAllCasesHandledFor} from "./util";
+import {parseVars, requireAllCasesHandledFor, NO_DESCRIPTION} from "./util";
 
 /**
  * ===[ Command Types ]===
@@ -149,7 +149,7 @@ abstract class BaseCommand {
     public readonly channelType: CHANNEL_TYPE | null; // null (default) indicates to inherit
 
     constructor(options?: CommandOptionsBase) {
-        this.description = options?.description || "No description.";
+        this.description = options?.description || NO_DESCRIPTION;
         this.usage = options?.usage ?? "";
         this.permission = options?.permission ?? -1;
         this.nsfw = options?.nsfw ?? null;
