@@ -2,9 +2,14 @@ import {
     Client,
     Collection,
     CommandInteraction,
+    CommandInteractionOption,
     ApplicationCommandData,
     ApplicationCommandOptionData,
-    ApplicationCommandOptionChoice
+    ApplicationCommandOptionChoice,
+    User,
+    GuildMember,
+    GuildChannel,
+    Role
 } from "discord.js";
 import {slashCommandRegistry} from "./loader";
 import {NO_DESCRIPTION} from "./util";
@@ -18,6 +23,10 @@ export enum SlashCommandOptionType {
     ROLE = 8,
     MENTIONABLE = 9
 }
+
+type SlashCommandExecuteFunction =
+    | ((interaction: CommandInteraction, options: CommandInteractionArgument[]) => Promise<any>)
+    | string;
 
 interface RestrictedApplicationCommandOptionBase {
     type: Exclude<SlashCommandOptionType, SlashCommandOptionType.STRING | SlashCommandOptionType.INTEGER>;
@@ -55,7 +64,7 @@ interface SlashCommandOptionsRootBase {
 
 interface SlashCommandOptionsRootEndpoint extends SlashCommandOptionsRootBase {
     readonly ephemeral?: boolean;
-    readonly run?: (interaction: CommandInteraction) => Promise<any> | string;
+    readonly run?: SlashCommandExecuteFunction;
     readonly options?: RestrictedApplicationCommandOption[];
     readonly subcommands?: undefined;
 }
@@ -72,7 +81,7 @@ interface SlashCommandOptionsNodeBase {
 
 interface SlashCommandOptionsEndpoint extends SlashCommandOptionsNodeBase {
     readonly ephemeral?: boolean;
-    readonly run?: (interaction: CommandInteraction) => Promise<any> | string;
+    readonly run?: SlashCommandExecuteFunction;
     readonly options?: RestrictedApplicationCommandOption[];
     readonly subcommands?: undefined;
 }
@@ -111,7 +120,7 @@ export class SlashCommand {
                             name: subheader,
                             description: subsubcommand.description || NO_DESCRIPTION,
                             type: 1, // SUBCOMMAND
-                            options: SlashCommand.getOptionsArray(subsubcommand.options)
+                            options: getOptionsArray(subsubcommand.options)
                         });
                     }
 
@@ -126,12 +135,12 @@ export class SlashCommand {
                         name: header,
                         description: subcommand.description || NO_DESCRIPTION,
                         type: 1, // SUBCOMMAND
-                        options: SlashCommand.getOptionsArray(subcommand.options)
+                        options: getOptionsArray(subcommand.options)
                     });
                 }
             }
         } else {
-            options = SlashCommand.getOptionsArray(this.data.options);
+            options = getOptionsArray(this.data.options);
         }
 
         return {
@@ -142,46 +151,26 @@ export class SlashCommand {
         };
     }
 
-    public async execute(interaction: CommandInteraction) {
-        interaction.reply("Soon:tm:");
-    }
+    public async execute(interaction: CommandInteraction): Promise<void> {
+        // Don't waste any lines of code on checking whether or not the option type is valid.
+        // If these safety guarantees aren't actually there, then the code needs fixing.
+        // Types of SUBCOMMAND_GROUP and SUBCOMMAND will be guaranteed to have exactly one element.
+        if (this.data.subcommands) {
+            const suboption = interaction.options[0];
+            const header = suboption.name;
+            const subcommand = this.data.subcommands[header];
 
-    private static getOptionsArray(
-        data?: RestrictedApplicationCommandOption[]
-    ): ApplicationCommandOptionData[] | undefined {
-        if (!data) return undefined;
-
-        const options: ApplicationCommandOptionData[] = [];
-
-        for (const inboundOptions of data) {
-            const {type, name, description, required} = inboundOptions;
-            let choices: ApplicationCommandOptionChoice[] | undefined;
-
-            // Apparently, inboundOptions.type must be used instead of type. Don't ask me why.
-            if (
-                (inboundOptions.type === SlashCommandOptionType.STRING ||
-                    inboundOptions.type === SlashCommandOptionType.INTEGER) &&
-                inboundOptions.choices
-            ) {
-                choices = [];
-
-                for (const [name, value] of Object.entries(inboundOptions.choices)) {
-                    choices.push({name, value});
-                }
+            if (subcommand.subcommands) {
+                const subsuboption = suboption.options![0];
+                const subheader = subsuboption.name;
+                const subsubcommand = subcommand.subcommands[subheader];
+                executeSlashCommand(interaction, subsubcommand.run, subsuboption.options);
             } else {
-                choices = undefined;
+                executeSlashCommand(interaction, subcommand.run, suboption.options);
             }
-
-            options.push({
-                type,
-                name,
-                description: description || NO_DESCRIPTION,
-                required,
-                choices
-            });
+        } else {
+            executeSlashCommand(interaction, this.data.run, interaction.options);
         }
-
-        return options;
     }
 
     public get guilds(): string[] {
@@ -268,4 +257,99 @@ export function attachSlashCommandHandlerToClient(client: Client, devServers: st
             }
         }
     });
+}
+
+function getOptionsArray(data?: RestrictedApplicationCommandOption[]): ApplicationCommandOptionData[] | undefined {
+    if (!data) return undefined;
+
+    const options: ApplicationCommandOptionData[] = [];
+
+    for (const inboundOptions of data) {
+        const {type, name, description, required} = inboundOptions;
+        let choices: ApplicationCommandOptionChoice[] | undefined;
+
+        // Apparently, inboundOptions.type must be used instead of type. Don't ask me why.
+        if (
+            (inboundOptions.type === SlashCommandOptionType.STRING ||
+                inboundOptions.type === SlashCommandOptionType.INTEGER) &&
+            inboundOptions.choices
+        ) {
+            choices = [];
+
+            for (const [name, value] of Object.entries(inboundOptions.choices)) {
+                choices.push({name, value});
+            }
+        } else {
+            choices = undefined;
+        }
+
+        options.push({
+            type,
+            name,
+            description: description || NO_DESCRIPTION,
+            required,
+            choices
+        });
+    }
+
+    return options;
+}
+
+interface UserMemberArgument {
+    user: User;
+    member: GuildMember;
+}
+
+type CommandInteractionArgument = string | number | boolean | UserMemberArgument | GuildChannel | Role | null;
+
+function transformOptionsArray(options: CommandInteractionOption[]): CommandInteractionArgument[] {
+    const parameters: CommandInteractionArgument[] = [];
+
+    for (const option of options) {
+        switch (option.type) {
+            case "STRING":
+            case "INTEGER":
+            case "BOOLEAN":
+                parameters.push(option.value!);
+                break;
+            case "USER":
+                parameters.push({
+                    user: option.user!,
+                    member: option.member // Likely unsafe
+                });
+                break;
+            case "CHANNEL":
+                parameters.push(option.channel);
+                break;
+            case "ROLE":
+                parameters.push(option.role);
+                break;
+            case "MENTIONABLE":
+                if (option.user) {
+                    parameters.push({
+                        user: option.user,
+                        member: option.member
+                    });
+                } else {
+                    parameters.push(option.role);
+                }
+                break;
+        }
+    }
+
+    return parameters;
+}
+
+async function executeSlashCommand(
+    interaction: CommandInteraction,
+    run?: SlashCommandExecuteFunction,
+    options: CommandInteractionOption[] = []
+) {
+    if (typeof run === "string") {
+        interaction.reply(run);
+    } else if (run) {
+        run(interaction, transformOptionsArray(options));
+    } else {
+        interaction.reply("No action was set on this command!");
+    }
 }
