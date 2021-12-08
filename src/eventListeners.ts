@@ -12,10 +12,10 @@ export function attachEventListenersToClient(client: Client) {
     client.on("messageReactionAdd", (reaction, user) => {
         // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
         // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-        const canDeleteEmotes = !!reaction.message.guild?.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES);
+        const canDeleteEmotes = !!reaction.message.guild?.me?.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES);
         const hasReactionHandler = reactEventListeners.has(reaction.message.id);
 
-        if (hasReactionHandler) {
+        if (hasReactionHandler && !reaction.partial) {
             reactEventListeners.get(reaction.message.id)!(reaction, user);
             // Remove the reaction if that specific message has a reaction handler attached, the bot has permission to do so, and the user isn't a bot.
             // It's VERY important this is contained within the check, otherwise, the bot will remove all reactions regardless of the message source.
@@ -24,9 +24,9 @@ export function attachEventListenersToClient(client: Client) {
     });
 
     client.on("messageReactionRemove", (reaction, user) => {
-        const canDeleteEmotes = reaction.message.guild?.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES);
+        const canDeleteEmotes = reaction.message.guild?.me?.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES);
         // If reactions aren't automatically removed, then call the event listener again.
-        if (!canDeleteEmotes) reactEventListeners.get(reaction.message.id)?.(reaction, user);
+        if (!canDeleteEmotes && !reaction.partial) reactEventListeners.get(reaction.message.id)?.(reaction, user);
     });
 
     client.on("messageReactionRemoveAll", (message) => {
@@ -39,7 +39,7 @@ export function attachEventListenersToClient(client: Client) {
         // If there's an inline reply, fire off that event listener (if it exists).
         if (message.reference) {
             const reference = message.reference;
-            replyEventListeners.get(`${reference.channelID}-${reference.messageID}`)?.(message);
+            replyEventListeners.get(`${reference.channelId}-${reference.messageId}`)?.(message);
         }
     });
 }

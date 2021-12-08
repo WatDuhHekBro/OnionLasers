@@ -5,7 +5,9 @@ import path from "path";
 
 // TODO: Add some mockups of data structures to test against then trigger them via client.emit().
 
-const client = new Client();
+const client = new Client({
+    intents: []
+});
 
 launch(client, path.join(__dirname, "commands"), {
     getPrefix: () => "$",

@@ -6,32 +6,23 @@ import {
     TextChannel,
     DMChannel,
     NewsChannel,
+    MessagePayload,
     MessageOptions,
     Channel,
     GuildChannel,
     User,
-    APIMessageContentResolvable,
-    MessageAdditions,
-    SplitOptions,
-    APIMessage,
-    StringResolvable,
     EmojiIdentifierResolvable,
     MessageReaction,
-    PartialUser
+    PartialUser,
+    PartialDMChannel,
+    ThreadChannel
 } from "discord.js";
 import {reactEventListeners, emptyReactEventListeners, replyEventListeners} from "./eventListeners";
 import {client} from "./interface";
 
 export type SingleMessageOptions = MessageOptions & {split?: false};
 
-export type SendFunction = ((
-    content: APIMessageContentResolvable | (MessageOptions & {split?: false}) | MessageAdditions
-) => Promise<Message>) &
-    ((options: MessageOptions & {split: true | SplitOptions}) => Promise<Message[]>) &
-    ((options: MessageOptions | APIMessage) => Promise<Message | Message[]>) &
-    ((content: StringResolvable, options: (MessageOptions & {split?: false}) | MessageAdditions) => Promise<Message>) &
-    ((content: StringResolvable, options: MessageOptions & {split: true | SplitOptions}) => Promise<Message[]>) &
-    ((content: StringResolvable, options: MessageOptions) => Promise<Message | Message[]>);
+export type SendFunction = (options: string | MessagePayload | MessageOptions) => Promise<Message>;
 
 interface PaginateOptions {
     multiPageSize?: number;
@@ -94,11 +85,11 @@ export function paginate(
                 if (user.id === listenTo || (listenTo === null && user.id !== client.user!.id)) {
                     // Turn the page
                     const emote = reaction.emoji.name;
-                    if (emote in stack) turn(stack[emote]);
+                    if (emote && emote in stack) turn(stack[emote]);
 
                     // Reset the timer
-                    client.clearTimeout(timeout);
-                    timeout = client.setTimeout(destroy, idleTimeout);
+                    clearTimeout(timeout);
+                    timeout = setTimeout(destroy, idleTimeout);
                 }
             };
 
@@ -113,7 +104,7 @@ export function paginate(
             reactInOrder(message, Object.keys(stack));
             reactEventListeners.set(message.id, handle);
             emptyReactEventListeners.set(message.id, destroy);
-            let timeout = client.setTimeout(destroy, idleTimeout);
+            let timeout = setTimeout(destroy, idleTimeout);
         }
     });
 }
@@ -122,10 +113,10 @@ export async function poll(message: Message, emotes: string[], duration = 60000)
     if (emotes.length === 0) throw new Error("poll() was called without any emotes.");
 
     reactInOrder(message, emotes);
-    const reactions = await message.awaitReactions(
-        (reaction: MessageReaction) => emotes.includes(reaction.emoji.name),
-        {time: duration}
-    );
+    const reactions = await message.awaitReactions({
+        filter: (reaction: MessageReaction) => !!reaction.emoji.name && emotes.includes(reaction.emoji.name),
+        time: duration
+    });
     const reactionsByCount: {[emote: string]: number} = {};
 
     for (const emote of emotes) {
@@ -195,7 +186,7 @@ export function askForReply(message: Message, listenTo: string, timeout?: number
         });
 
         if (timeout) {
-            client.setTimeout(() => {
+            setTimeout(() => {
                 if (!message.deleted) message.delete();
                 replyEventListeners.delete(referenceID);
                 resolve(null);
@@ -216,12 +207,12 @@ export function generateOneTimePrompt<T>(
         reactInOrder(message, Object.keys(stack));
 
         // Then setup the reaction listener in parallel.
-        await message.awaitReactions(
-            (reaction: MessageReaction, user: User) => {
+        await message.awaitReactions({
+            filter: (reaction: MessageReaction, user: User) => {
                 if (user.id === listenTo || listenTo === null) {
                     const emote = reaction.emoji.name;
 
-                    if (emote in stack) {
+                    if (emote && emote in stack) {
                         resolve(stack[emote]);
                         message.delete();
                     }
@@ -233,8 +224,8 @@ export function generateOneTimePrompt<T>(
                 // May as well just set it to false because I'm not concerned with collecting any reactions.
                 return false;
             },
-            {time: duration}
-        );
+            time: duration
+        });
 
         if (!message.deleted) {
             message.delete();
@@ -286,7 +277,7 @@ export function getGuildByName(name: string): Guild | string {
 
 export async function getChannelByID(id: string): Promise<Channel | string> {
     try {
-        return await client.channels.fetch(id);
+        return (await client.channels.fetch(id)) ?? `No channel found by the ID of \`${id}\`!`;
     } catch {
         return `No channel found by the ID of \`${id}\`!`;
     }
@@ -303,7 +294,7 @@ export function getChannelByName(name: string): GuildChannel | string {
 }
 
 export async function getMessageByID(
-    channel: TextChannel | DMChannel | NewsChannel | string,
+    channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | ThreadChannel | string,
     id: string
 ): Promise<Message | string> {
     if (typeof channel === "string") {

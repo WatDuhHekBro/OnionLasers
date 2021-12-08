@@ -3,7 +3,6 @@
     "version": "1.0.0",
     "main": "dist/index.js",
     "scripts": {
-        "start": "tsc-watch --onSuccess \"npm run instance\"",
-        "instance": "gulp && tsc && node ."
+        "start": "tsc-watch --onSuccess \"rimraf dist && tsc && node -r dotenv/config .\""
     }
 }

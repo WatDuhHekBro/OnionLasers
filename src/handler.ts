@@ -1,4 +1,13 @@
-import {Client, Permissions, Message, TextChannel, DMChannel, NewsChannel} from "discord.js";
+import {
+    Client,
+    Permissions,
+    Message,
+    TextChannel,
+    DMChannel,
+    NewsChannel,
+    PartialDMChannel,
+    ThreadChannel
+} from "discord.js";
 import {getPrefix, loadableCommands} from "./interface";
 
 // For custom message events that want to cancel the command handler on certain conditions.
@@ -13,7 +22,7 @@ export function addInterceptRule(handler: (message: Message) => boolean) {
 interface ExecutedCommandInfo {
     header: string;
     args: string[];
-    channel: TextChannel | DMChannel | NewsChannel;
+    channel: TextChannel | DMChannel | NewsChannel | PartialDMChannel | ThreadChannel;
 }
 
 let executedCommandListener = (_executedCommandInfo: ExecutedCommandInfo) => {};
@@ -57,7 +66,7 @@ export function attachMessageHandlerToClient(client: Client) {
         };
 
         // Execute a dedicated block for messages in DM channels.
-        if (channel.type === "dm") {
+        if (channel.type === "DM") {
             // In a DM channel, simply forget about the prefix and execute any message as a command.
             const [header, ...args] = text.split(/ +/);
 
@@ -92,7 +101,7 @@ export function attachMessageHandlerToClient(client: Client) {
             const prefix = getPrefix(guild);
             const hasPermissionToSend = channel.permissionsFor(client.user!)!.has(Permissions.FLAGS.SEND_MESSAGES);
             const noPermissionToSendMessage = `I don't have permission to send messages in ${channel}. ${
-                member!.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+                member!.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
                     ? "Because you're a server admin, you have the ability to change that channel's permissions to match if that's what you intended."
                     : "Try using a different channel or contacting a server admin to change permissions of that channel if you think something's wrong."
             }`;
