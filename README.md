@@ -19,7 +19,7 @@
 
 A declarative, structure-agnostic, TypeScript-centric command handler for [discord.js](https://discord.js.org/).
 
-*Note: There's an unstable version in the works which uses discord.js v13 (via its `master` branch), installable via `npm install onion-lasers@unstable`. Interfaces defined in this branch are subject to change. I don't recommend using this unless you know what you're doing!*
+***Note: This package is no longer being maintained.***
 
 # Table of Contents
 
